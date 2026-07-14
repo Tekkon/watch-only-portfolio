@@ -1,0 +1,68 @@
+# Local development stack. Run with: docker compose up
+#
+#   db     - PostgreSQL (data persisted in the `pgdata` volume)
+#   web    - Rails app on http://localhost:3000
+#   worker - Solid Queue worker (bin/jobs) for background + recurring jobs
+#
+# There is no separate "queue" broker: Solid Queue stores jobs in Postgres, so the
+# worker is just another process against the same `db`. (A `redis` service would
+# only be needed if we switched to Sidekiq.)
+
+name: watch-only-portfolio
+
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  image: watch-only-portfolio-dev
+  env_file: .env
+  volumes:
+    - .:/rails
+    - bundle:/usr/local/bundle
+  depends_on:
+    db:
+      condition: service_healthy
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-watch_only_portfolio_development}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      # Host port is configurable to avoid clashing with a local Postgres.
+      # Override with DB_HOST_PORT in .env. The app containers use the internal
+      # network (host `db`, port 5432) regardless.
+      - "${DB_HOST_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    <<: *app
+    # Prepares the DB (migrate + seed) on boot, then starts the server.
+    entrypoint: ["./bin/docker-entrypoint-dev"]
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+    ports:
+      # Host port is configurable to avoid clashing with another local app on 3000.
+      # Override with WEB_HOST_PORT in .env. Container always listens on 3000.
+      - "${WEB_HOST_PORT:-3001}:3000"
+
+  worker:
+    <<: *app
+    # No db:prepare here — web owns migrations. Worker just processes jobs.
+    command: ["./bin/jobs"]
+    depends_on:
+      db:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+volumes:
+  pgdata:
+  bundle:

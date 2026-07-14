@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1
+# Development image for Docker Compose. The production build lives in ./Dockerfile.
+# Source is bind-mounted (see compose.yaml), so this only needs the runtime + gems.
+ARG RUBY_VERSION=3.4.5
+FROM docker.io/library/ruby:$RUBY_VERSION-slim
+
+WORKDIR /rails
+
+# Packages: build toolchain for native gems (pg, etc.) + libvips + postgres client.
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+      build-essential git curl libpq-dev libyaml-dev libvips postgresql-client pkg-config && \
+    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+
+ENV RAILS_ENV="development" \
+    BUNDLE_PATH="/usr/local/bundle"
+
+# Install gems first so this layer caches unless the Gemfile changes.
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# App code is bind-mounted at runtime; copy is a fallback for `docker build` alone.
+COPY . .
+
+EXPOSE 3000
+
+# Overridden per-service in compose.yaml (web -> rails server, worker -> bin/jobs).
+CMD ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]

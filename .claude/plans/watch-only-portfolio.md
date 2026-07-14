@@ -377,7 +377,7 @@ volumes: { pgdata: {} }
 
 ## 12. Milestones (incremental, each shippable)
 
-1. **Skeleton + Docker** — `rails new` (Postgres, Tailwind, importmap, Solid Queue). `compose.yaml` with `db`/`web`/`worker`, `.env.example`, `db:prepare` on boot. Address model. Seed test addresses. `docker compose up` boots. *No external calls yet.*
+1. ✅ **Skeleton + Docker** — `rails new` (Postgres, Tailwind, importmap, Solid Queue). `compose.yaml` with `db`/`web`/`worker`, `.env.example`, `db:prepare` on boot (via `bin/docker-entrypoint-dev`). Address model (`chain_family` enum + watch-only key/seed guardrail + `[address, chain_family]` unique index). Seeds 3 public addresses. `docker compose up` boots web on **:3001**; worker processes Solid Queue jobs; verified end-to-end. *No external calls yet.*
 2. **DeBank EVM adapter** — `total_balance`, `all_complex_protocol_list`, `all_token_list` behind the adapter interface, with VCR fixtures. Normalize → snapshot writer. Manual "refresh" rake task.
 3. **Public viewer + dashboard read side** — query objects + shared portfolio partials; **`/:address`** public route (constrained, declared last); total USD, non-zero protocol list, asset pie (Chart.js).
 4. **Connect Wallet (view)** — Stimulus + `window.ethereum` connect button → redirect to `/:address`; landing renders connected wallet's portfolio by default.

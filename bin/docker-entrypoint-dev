@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+# Development entrypoint for Docker Compose.
+# Ensures gems are current, prepares the database, then runs the given command.
+
+# Install any gems added since the image was built (bind-mounted Gemfile).
+bundle check || bundle install
+
+# Remove a stale server PID from a previous, non-graceful shutdown.
+rm -f tmp/pids/server.pid
+
+# Create/migrate/seed the database. Idempotent; safe to run every boot.
+./bin/rails db:prepare
+
+exec "$@"
