@@ -1,0 +1,30 @@
+# Single source of truth for every external provider: base URLs, timeouts,
+# rate limits, and where the API key comes from. Swapping providers (or a key)
+# never touches business logic — adapters read only from DataSources.config.
+#
+# Keys resolve at runtime from ENV (see access_key_env) or Rails credentials,
+# never committed here. Blank keys are fine until an adapter actually runs.
+
+default: &default
+  debank:
+    # DeBank Cloud Open API — EVM DeFi + wallet tokens (Milestone 2).
+    base_url: "https://pro-openapi.debank.com/v1"
+    access_key_env: "DEBANK_ACCESS_KEY" # AccessKey header; falls back to credentials.debank.access_key
+    open_timeout: 5   # seconds to establish the connection
+    timeout: 15       # seconds to read the full response
+    max_retries: 2    # transient 429/5xx/timeout retries with backoff
+
+development:
+  <<: *default
+
+test:
+  <<: *default
+  debank:
+    base_url: "https://pro-openapi.debank.com/v1"
+    access_key_env: "DEBANK_ACCESS_KEY"
+    open_timeout: 5
+    timeout: 15
+    max_retries: 0 # deterministic tests — no retry loops against cassettes
+
+production:
+  <<: *default

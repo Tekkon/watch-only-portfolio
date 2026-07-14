@@ -17,6 +17,11 @@ gem "stimulus-rails"
 # Use Tailwind CSS [https://github.com/rails/tailwindcss-rails]
 gem "tailwindcss-rails"
 
+# HTTP client for external data-source adapters (DeBank, explorers, CoinGecko).
+# Retry + timeout middleware keeps one flaky provider from blanking the dashboard.
+gem "faraday"
+gem "faraday-retry"
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
@@ -46,6 +51,13 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # RSpec test framework for Rails [https://github.com/rspec/rspec-rails]
+  gem "rspec-rails"
+
+  # Record & replay external HTTP so adapter tests never spend live DeBank units.
+  gem "vcr"
+  gem "webmock"
 end
 
 group :development do

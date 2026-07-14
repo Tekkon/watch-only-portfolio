@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_14_145818) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_14_150003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -24,6 +24,40 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_14_145818) do
     t.datetime "updated_at", null: false
     t.index ["address", "chain_family"], name: "index_addresses_on_address_and_chain_family", unique: true
     t.index ["address"], name: "index_addresses_on_address"
+  end
+
+  create_table "asset_balances", force: :cascade do |t|
+    t.bigint "portfolio_snapshot_id", null: false
+    t.string "symbol", null: false
+    t.string "chain"
+    t.decimal "amount", precision: 40, scale: 18, default: "0.0", null: false
+    t.decimal "usd_value", precision: 30, scale: 8, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["portfolio_snapshot_id"], name: "index_asset_balances_on_portfolio_snapshot_id"
+  end
+
+  create_table "portfolio_snapshots", force: :cascade do |t|
+    t.bigint "address_id", null: false
+    t.decimal "total_usd", precision: 30, scale: 8, default: "0.0", null: false
+    t.datetime "fetched_at", null: false
+    t.jsonb "raw_payload"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["address_id", "fetched_at"], name: "index_portfolio_snapshots_on_address_id_and_fetched_at"
+    t.index ["address_id"], name: "index_portfolio_snapshots_on_address_id"
+  end
+
+  create_table "protocol_positions", force: :cascade do |t|
+    t.bigint "portfolio_snapshot_id", null: false
+    t.string "protocol_id", null: false
+    t.string "name"
+    t.string "chain"
+    t.string "logo_url"
+    t.decimal "usd_value", precision: 30, scale: 8, default: "0.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["portfolio_snapshot_id"], name: "index_protocol_positions_on_portfolio_snapshot_id"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -147,6 +181,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_14_145818) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  add_foreign_key "asset_balances", "portfolio_snapshots"
+  add_foreign_key "portfolio_snapshots", "addresses"
+  add_foreign_key "protocol_positions", "portfolio_snapshots"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade

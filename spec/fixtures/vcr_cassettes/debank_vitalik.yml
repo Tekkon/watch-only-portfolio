@@ -1,0 +1,105 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://pro-openapi.debank.com/v1/user/total_balance?id=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accesskey:
+      - "<DEBANK_ACCESS_KEY>"
+      Accept:
+      - application/json
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+    body:
+      encoding: UTF-8
+      string: |
+        {
+          "total_usd_value": 1250.5,
+          "chain_list": [
+            { "id": "eth", "name": "Ethereum", "usd_value": 1000.5 },
+            { "id": "arb", "name": "Arbitrum", "usd_value": 250.0 }
+          ]
+        }
+    http_version:
+  recorded_at: Mon, 14 Jul 2026 15:00:00 GMT
+- request:
+    method: get
+    uri: https://pro-openapi.debank.com/v1/user/all_token_list?id=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accesskey:
+      - "<DEBANK_ACCESS_KEY>"
+      Accept:
+      - application/json
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+    body:
+      encoding: UTF-8
+      string: |
+        [
+          { "id": "eth", "chain": "eth", "symbol": "ETH", "amount": 0.5, "price": 2000.0 },
+          { "id": "usdc", "chain": "arb", "symbol": "USDC", "amount": 250.0, "price": 1.0 },
+          { "id": "scam", "chain": "eth", "symbol": "SCAM", "amount": 1000000.0, "price": 0.0 }
+        ]
+    http_version:
+  recorded_at: Mon, 14 Jul 2026 15:00:00 GMT
+- request:
+    method: get
+    uri: https://pro-openapi.debank.com/v1/user/all_complex_protocol_list?id=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accesskey:
+      - "<DEBANK_ACCESS_KEY>"
+      Accept:
+      - application/json
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Content-Type:
+      - application/json
+    body:
+      encoding: UTF-8
+      string: |
+        [
+          {
+            "id": "aave3",
+            "name": "Aave V3",
+            "chain": "arb",
+            "logo_url": "https://static.debank.com/aave.png",
+            "portfolio_item_list": [
+              { "stats": { "net_usd_value": 500.0 } },
+              { "stats": { "net_usd_value": 100.25 } }
+            ]
+          },
+          {
+            "id": "empty",
+            "name": "Empty Protocol",
+            "chain": "eth",
+            "logo_url": null,
+            "portfolio_item_list": [
+              { "stats": { "net_usd_value": 0.0 } }
+            ]
+          }
+        ]
+    http_version:
+  recorded_at: Mon, 14 Jul 2026 15:00:00 GMT
+recorded_with: VCR 6.0.0

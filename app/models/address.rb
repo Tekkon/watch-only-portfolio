@@ -3,6 +3,8 @@ class Address < ApplicationRecord
   # registry (DataSources::Registry) — added in a later milestone.
   enum :chain_family, { evm: 0, bitcoin: 1, solana: 2 }
 
+  has_many :portfolio_snapshots, dependent: :destroy
+
   # How long a cached balance is considered fresh before a refresh is enqueued.
   STALENESS_WINDOW = 10.minutes
 
@@ -18,6 +20,11 @@ class Address < ApplicationRecord
 
   def stale?
     last_synced_at.nil? || last_synced_at < STALENESS_WINDOW.ago
+  end
+
+  # Most recent cached balance, or nil if this address has never been synced.
+  def latest_snapshot
+    portfolio_snapshots.latest.first
   end
 
   private
