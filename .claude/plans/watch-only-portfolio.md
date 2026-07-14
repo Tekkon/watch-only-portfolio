@@ -310,12 +310,74 @@ GET  /:address     -> "portfolios#show"       # PUBLIC viewer for any address  (
 | Charts | Chart.js via importmap + Stimulus |
 | CSS | Tailwind |
 | Testing | RSpec/Minitest + VCR + WebMock for adapters |
+| Local run | **Docker Compose** — `web`, `worker`, `db` (+ optional `redis`) |
 
 ---
 
-## 11. Milestones (incremental, each shippable)
+## 11. Local Dev with Docker Compose
 
-1. **Skeleton** — `rails new` (Postgres, Tailwind, importmap, Solid Queue). Address model. Seed test addresses. *No external calls yet.*
+Run everything locally with `docker compose up`. Services:
+
+| Service | Image / build | Role |
+|---|---|---|
+| **`db`** | `postgres:16` | PostgreSQL. Named volume for data; healthcheck gates the app. |
+| **`web`** | build `./Dockerfile` | Rails app (`bin/rails server -b 0.0.0.0`), port `3000:3000`. |
+| **`worker`** | same image as `web` | **Solid Queue** worker (`bin/jobs`) — runs background + recurring refresh jobs. Same code, different command. |
+| **`redis`** | `redis:7` | **Only if we switch to Sidekiq.** With Solid Queue it's not needed (queue lives in Postgres). Listed as optional. |
+
+> **Why no separate "queue" service by default:** Solid Queue stores jobs in **Postgres**, so
+> the "queue" is just another process (`worker`) against the same `db` — not a broker container.
+> Solid Cable (Turbo Stream broadcasts) also uses Postgres. If we pick **Sidekiq** instead (open
+> question #1), add the `redis` service and point both `web` and `worker` at it.
+
+### Dockerfile
+- Base the app image on the **Dockerfile that Rails 8 generates** (`rails new` ships a production `Dockerfile`). For local dev we add a lightweight target/compose override that mounts the source for live reload and installs dev gems. Multi-stage: build (gems + assets) → slim runtime.
+- Node/Yarn not required (importmap + `tailwindcss-rails` ships a standalone binary), keeping the image small.
+
+### compose.yaml (shape)
+```yaml
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_USER: app, POSTGRES_PASSWORD: app, POSTGRES_DB: watch_only_dev }
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+    healthcheck: { test: ["CMD-SHELL","pg_isready -U app"], interval: 5s, retries: 10 }
+    ports: [ "5432:5432" ]
+
+  web:
+    build: .
+    command: ./bin/rails server -b 0.0.0.0 -p 3000
+    env_file: [ .env ]                 # DATABASE_URL, DEBANK_ACCESS_KEY, OAuth keys, etc.
+    volumes: [ ".:/rails" ]            # dev live-reload (dev override only)
+    ports: [ "3000:3000" ]
+    depends_on: { db: { condition: service_healthy } }
+
+  worker:
+    build: .
+    command: ./bin/jobs               # Solid Queue supervisor
+    env_file: [ .env ]
+    volumes: [ ".:/rails" ]
+    depends_on: { db: { condition: service_healthy } }
+
+  # redis:                            # ONLY if switching to Sidekiq
+  #   image: redis:7
+  #   ports: [ "6379:6379" ]
+
+volumes: { pgdata: {} }
+```
+
+### Conventions
+- **`DATABASE_URL`** points `web`/`worker` at the `db` service (`postgres://app:app@db:5432/watch_only_dev`).
+- Secrets & API keys via **`.env`** (git-ignored) → env vars; `.env.example` committed as a template.
+- First-run: `docker compose run --rm web ./bin/rails db:prepare` (or an entrypoint that runs `db:prepare` before boot).
+- `bin/dev`-style convenience: a short README section with `docker compose up` / `run --rm web bin/rails c` / `run --rm web bin/rails test`.
+- Keep a plain **non-Docker** path working too (some devs prefer local Ruby); Docker is the documented default.
+
+---
+
+## 12. Milestones (incremental, each shippable)
+
+1. **Skeleton + Docker** — `rails new` (Postgres, Tailwind, importmap, Solid Queue). `compose.yaml` with `db`/`web`/`worker`, `.env.example`, `db:prepare` on boot. Address model. Seed test addresses. `docker compose up` boots. *No external calls yet.*
 2. **DeBank EVM adapter** — `total_balance`, `all_complex_protocol_list`, `all_token_list` behind the adapter interface, with VCR fixtures. Normalize → snapshot writer. Manual "refresh" rake task.
 3. **Public viewer + dashboard read side** — query objects + shared portfolio partials; **`/:address`** public route (constrained, declared last); total USD, non-zero protocol list, asset pie (Chart.js).
 4. **Connect Wallet (view)** — Stimulus + `window.ethereum` connect button → redirect to `/:address`; landing renders connected wallet's portfolio by default.
@@ -329,9 +391,9 @@ GET  /:address     -> "portfolios#show"       # PUBLIC viewer for any address  (
 
 ---
 
-## 12. Open Questions / To Confirm Before Coding
+## 13. Open Questions / To Confirm Before Coding
 
-1. **Job/queue**: OK with **Solid Queue** (Rails 8 default, no Redis), or do you want **Sidekiq**?
+1. **Job/queue**: OK with **Solid Queue** (Rails 8 default, no Redis → no separate queue container, just a `worker`), or do you want **Sidekiq** (adds a `redis` service)?
 2. **Solana provider**: **Zerion** or **CoinStats** for the Solana adapter? (Both have free tiers; I'll pick CoinStats unless you prefer Zerion.)
 3. **BTC explorer**: **mempool.space** vs **Blockstream** — either is fine; default mempool.space.
 4. **Wallet sign-in (SIWE)**: do you want it in v1, or start with just email + Google/Apple and add SIWE later? (Connect-wallet-to-*view* is in v1 regardless.)
