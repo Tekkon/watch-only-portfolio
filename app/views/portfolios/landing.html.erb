@@ -1,0 +1,42 @@
+<% content_for :title, "Watch-Only Crypto Portfolio" %>
+
+<%# The wallet-connect controller talks to window.ethereum. On load, if a wallet
+    is already connected it redirects to that address's portfolio by default
+    (plan §7.1); the button triggers an explicit connect otherwise. It builds the
+    /:address viewer URL from the returned address itself. %>
+<div class="mx-auto w-full max-w-xl text-center"
+     data-controller="wallet-connect">
+  <h1 class="text-3xl font-bold text-gray-900">Watch-Only Crypto Portfolio</h1>
+  <p class="mt-2 text-gray-500">
+    View any wallet's balances across chains, DeFi protocols, and assets — no account, no keys.
+  </p>
+
+  <div class="mt-8 space-y-4">
+    <%# Shown only when an injected EIP-1193 wallet is available. %>
+    <button type="button"
+            data-wallet-connect-target="button"
+            data-action="wallet-connect#requestConnect"
+            class="hidden w-full rounded-lg bg-indigo-600 px-4 py-3 font-medium text-white hover:bg-indigo-700">
+      Connect Wallet
+    </button>
+
+    <p data-wallet-connect-target="error"
+       class="hidden text-sm text-red-600" role="alert"></p>
+
+    <div class="flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400"
+         data-wallet-connect-target="divider" hidden>
+      <span class="h-px flex-1 bg-gray-200"></span>
+      <span>or look up any address</span>
+      <span class="h-px flex-1 bg-gray-200"></span>
+    </div>
+
+    <%= form_with url: lookup_path, method: :get, class: "flex gap-2" do |f| %>
+      <%= f.text_field :address,
+            placeholder: "0x… or a Bitcoin / Solana address",
+            autocomplete: "off", spellcheck: "false",
+            class: "flex-1 rounded-lg border border-gray-300 px-4 py-3 font-mono text-sm focus:border-indigo-500 focus:outline-none" %>
+      <%= f.submit "View",
+            class: "cursor-pointer rounded-lg bg-gray-900 px-5 py-3 font-medium text-white hover:bg-gray-800" %>
+    <% end %>
+  </div>
+</div>

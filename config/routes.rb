@@ -9,8 +9,13 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Landing: Connect-Wallet button (client-side redirect to /:address) + an
+  # address search box. No account required — the default public entry point.
+  root "portfolios#landing"
+
+  # Address search box submits here; we normalize + redirect to the /:address
+  # viewer (or back to landing with an error for an unrecognized address).
+  get "/lookup", to: "portfolios#lookup", as: :lookup
 
   # PUBLIC watch-only viewer for any address. Greedy catch-all → declared LAST
   # and constrained to EVM (0x + 40 hex) / Bitcoin·Solana (base58) forms so it

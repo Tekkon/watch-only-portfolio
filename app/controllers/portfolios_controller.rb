@@ -1,4 +1,23 @@
 class PortfoliosController < ApplicationController
+  # Landing (root): Connect-Wallet button + address search box. If the browser
+  # already has a wallet connected, a Stimulus controller redirects to its
+  # /:address on load; otherwise the user connects or searches. No server state.
+  def landing
+  end
+
+  # Address search box target. Normalizes the submitted address and redirects to
+  # the public viewer, or back to landing with a flash for unrecognized input.
+  def lookup
+    raw = params[:address].to_s.strip
+    chain_family = Address.chain_family_for(raw)
+
+    if chain_family.nil?
+      redirect_to root_path, alert: "#{raw.presence || 'That'} doesn't look like an EVM, Bitcoin, or Solana address."
+    else
+      redirect_to portfolio_path(Address.normalize(raw, chain_family))
+    end
+  end
+
   # Public, watch-only viewer for any address: GET /:address.
   # Reads only from cached snapshots (query objects) — no external calls here;
   # keeping the cache warm is the refresh job's job (Milestone 5).
