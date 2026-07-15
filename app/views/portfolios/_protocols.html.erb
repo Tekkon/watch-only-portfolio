@@ -1,0 +1,35 @@
+<%# Protocol list — non-zero only, sorted by USD desc (Dashboard::ProtocolBreakdown).
+    Wrapped in a Turbo Frame so a later milestone can refresh it in place. %>
+<%= turbo_frame_tag :protocols do %>
+  <section>
+    <h2 class="mb-3 text-lg font-semibold text-gray-900">Protocols</h2>
+
+    <% if protocols.empty? %>
+      <p class="text-sm text-gray-500">No protocol positions.</p>
+    <% else %>
+      <ul class="divide-y divide-gray-100 rounded-lg border border-gray-100">
+        <% protocols.each do |row| %>
+          <li class="flex items-center justify-between px-4 py-3">
+            <div class="flex items-center gap-3">
+              <% if row.logo_url.present? %>
+                <%= image_tag row.logo_url, alt: row.name, loading: "lazy",
+                      class: "h-8 w-8 rounded-full bg-gray-100 object-contain" %>
+              <% else %>
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs text-gray-500">
+                  <%= row.name.to_s.first(2).upcase %>
+                </span>
+              <% end %>
+              <div>
+                <p class="font-medium text-gray-900"><%= row.name.presence || row.protocol_id %></p>
+                <% if row.chain.present? %>
+                  <p class="text-xs uppercase text-gray-400"><%= row.chain %></p>
+                <% end %>
+              </div>
+            </div>
+            <p class="font-semibold text-gray-900"><%= usd(row.usd_value) %></p>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
+<% end %>

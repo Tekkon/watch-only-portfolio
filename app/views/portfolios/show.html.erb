@@ -1,0 +1,29 @@
+<% content_for :title, "#{short_address(@raw_address)} · Watch-Only Portfolio" %>
+
+<div class="mx-auto w-full max-w-3xl">
+  <header class="mb-8 text-center">
+    <span class="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600">
+      <span class="font-semibold"><%= chain_family_label(@chain_family) %></span>
+      <span class="font-mono"><%= short_address(@raw_address) %></span>
+    </span>
+    <% if @synced_at %>
+      <p class="mt-2 text-xs text-gray-400">
+        Updated <%= time_ago_in_words(@synced_at) %> ago
+      </p>
+    <% end %>
+  </header>
+
+  <% if @address.nil? || @synced_at.nil? %>
+    <%# Ad-hoc lookup that's never been synced — nothing cached yet. The refresh
+        job (Milestone 5) populates it; for now show an honest empty state. %>
+    <div class="rounded-lg border border-dashed border-gray-200 p-10 text-center">
+      <p class="text-lg font-medium text-gray-700">No cached balance yet</p>
+      <p class="mt-1 text-sm text-gray-500">
+        This address hasn't been synced. Live fetching arrives in a later milestone.
+      </p>
+    </div>
+  <% else %>
+    <%= render "portfolios/portfolio",
+          total: @total, protocols: @protocols, allocation: @allocation %>
+  <% end %>
+</div>

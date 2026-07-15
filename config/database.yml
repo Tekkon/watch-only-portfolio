@@ -18,11 +18,15 @@ default: &default
   # For details on connection pooling, see Rails configuration guide
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  # Connection params come from the Compose service vars (see .env). Every env
+  # shares host/port/creds and only overrides its own `database:` below, so dev
+  # and test never collide. No DATABASE_URL — a URL would override these and
+  # force every env onto one database.
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  port: <%= ENV.fetch("POSTGRES_PORT", 5432) %>
+  username: <%= ENV.fetch("POSTGRES_USER", "app") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "app") %>
 
-
-# Under Docker Compose, DATABASE_URL (see .env) points Rails at the `db` service and
-# overrides the settings below. Locally without Docker, this default targets a
-# standard local Postgres.
 development:
   <<: *default
   database: watch_only_portfolio_development

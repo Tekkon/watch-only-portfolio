@@ -1,0 +1,8 @@
+<%# The whole portfolio body: total header + asset pie + protocol list. Shared
+    by the public `/:address` viewer and (Milestone 7) the user dashboard, which
+    passes an aggregated set of snapshots to the same three query objects. %>
+<div class="mx-auto w-full max-w-3xl space-y-10">
+  <%= render "portfolios/total", total: total %>
+  <%= render "portfolios/asset_chart", allocation: allocation %>
+  <%= render "portfolios/protocols", protocols: protocols %>
+</div>

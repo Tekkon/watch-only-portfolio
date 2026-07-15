@@ -18,6 +18,30 @@ class Address < ApplicationRecord
 
   scope :active, -> { where(active: true) }
 
+  # Address shapes we recognize on the public `/:address` route. EVM is a
+  # 0x-prefixed 40-hex string; Solana/Bitcoin are base58 (26–44 chars). Kept in
+  # sync with the route constraint in config/routes.rb.
+  EVM_FORMAT = /\A0x[0-9a-fA-F]{40}\z/
+  BASE58_FORMAT = /\A[1-9A-HJ-NP-Za-km-z]{26,44}\z/
+
+  # Guess which chain family a raw address string belongs to, so the public
+  # viewer can look one up without the user picking a chain. EVM is unambiguous
+  # (0x…); base58 forms default to bitcoin here (Solana lands in Milestone 10).
+  def self.chain_family_for(raw)
+    normalized = raw.to_s.strip
+    return :evm if normalized.match?(EVM_FORMAT)
+    return :bitcoin if normalized.match?(BASE58_FORMAT)
+
+    nil
+  end
+
+  # Normalize for storage/lookup so the shared cache keys on one canonical form
+  # per address. EVM is case-insensitive → downcase; base58 is case-sensitive.
+  def self.normalize(raw, chain_family)
+    value = raw.to_s.strip
+    chain_family.to_s == "evm" ? value.downcase : value
+  end
+
   def stale?
     last_synced_at.nil? || last_synced_at < STALENESS_WINDOW.ago
   end

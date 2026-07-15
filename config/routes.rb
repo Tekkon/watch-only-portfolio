@@ -11,4 +11,12 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  # PUBLIC watch-only viewer for any address. Greedy catch-all → declared LAST
+  # and constrained to EVM (0x + 40 hex) / Bitcoin·Solana (base58) forms so it
+  # can't swallow /dashboard, /addresses, /users, etc. (added later milestones).
+  # Keep the constraint in sync with Address::EVM_FORMAT / BASE58_FORMAT.
+  get "/:address", to: "portfolios#show",
+    as: :portfolio,
+    constraints: { address: /0x[0-9a-fA-F]{40}|[1-9A-HJ-NP-Za-km-z]{26,44}/ }
 end

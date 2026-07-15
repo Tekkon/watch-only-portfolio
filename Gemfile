@@ -55,6 +55,9 @@ group :development, :test do
   # RSpec test framework for Rails [https://github.com/rspec/rspec-rails]
   gem "rspec-rails"
 
+  # Test data factories [https://github.com/thoughtbot/factory_bot_rails]
+  gem "factory_bot_rails"
+
   # Record & replay external HTTP so adapter tests never spend live DeBank units.
   gem "vcr"
   gem "webmock"

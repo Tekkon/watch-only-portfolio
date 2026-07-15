@@ -1,0 +1,32 @@
+<%# Per-asset pie chart. A Stimulus controller (asset_chart) reads the JSON in
+    data-asset-chart-data-value and renders it with Chart.js. The legend/table
+    below doubles as an accessible, no-JS fallback. `allocation` is a
+    Dashboard::AssetAllocation. %>
+<% slices = allocation.slices %>
+<section>
+  <h2 class="mb-3 text-lg font-semibold text-gray-900">Assets</h2>
+
+  <% if slices.empty? %>
+    <p class="text-sm text-gray-500">No assets to chart.</p>
+  <% else %>
+    <div class="flex flex-col items-center gap-6 md:flex-row md:items-start"
+         data-controller="asset-chart"
+         data-asset-chart-data-value="<%= allocation.to_chart_data.to_json %>">
+      <div class="w-full max-w-xs">
+        <canvas data-asset-chart-target="canvas" role="img"
+                aria-label="Asset allocation pie chart"></canvas>
+      </div>
+
+      <ul class="w-full space-y-1">
+        <% slices.each do |slice| %>
+          <li class="flex items-center justify-between text-sm">
+            <span class="font-medium text-gray-800"><%= slice.symbol %></span>
+            <span class="text-gray-500">
+              <%= usd(slice.usd_value) %> · <%= number_to_percentage(slice.pct, precision: 1) %>
+            </span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</section>
