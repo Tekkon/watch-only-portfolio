@@ -3,6 +3,7 @@
 #   db     - PostgreSQL (data persisted in the `pgdata` volume)
 #   web    - Rails app on http://localhost:3000
 #   worker - Solid Queue worker (bin/jobs) for background + recurring jobs
+#   css    - Tailwind watcher: rebuilds app/assets/builds/tailwind.css on edits
 #
 # There is no separate "queue" broker: Solid Queue stores jobs in Postgres, so the
 # worker is just another process against the same `db`. (A `redis` service would
@@ -62,6 +63,16 @@ services:
         condition: service_healthy
       web:
         condition: service_started
+
+  css:
+    <<: *app
+    # Watches templates and rebuilds app/assets/builds/tailwind.css on every edit
+    # (the shared source mount makes the rebuilt file visible to web). Needs no DB.
+    # `[always]` (--watch=always) keeps the watcher alive without a TTY —
+    # otherwise the standalone CLI exits immediately in a container.
+    entrypoint: []
+    command: ["./bin/rails", "tailwindcss:watch[always]"]
+    depends_on: []
 
 volumes:
   pgdata:
